@@ -7,9 +7,9 @@
   )
 
 (defn -main
-  "Try to parse standard input for"
-  [filename]
-  (let [stream (if filename (io/input-stream filename) *in*)
+  [& args]
+  (let [filename (first args)
+        stream (if filename (io/input-stream filename) *in*)
         result (app/validate stream)]
     (if result
       (do

@@ -1,4 +1,4 @@
-(defproject clojure-syntax-check "0.1.0"
+(defproject clojure-syntax-check "0.1.1"
   :description "A syntax checker for Clojure"
   :url "http://github.com/leonid-shevtsov/clojure-syntax-check"
   :license {:name "The MIT License"
