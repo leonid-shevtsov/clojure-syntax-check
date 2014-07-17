@@ -9,10 +9,14 @@
 (defn -main
   "Try to parse standard input for"
   [filename]
-  (app/validate
-    (if filename
-      (io/input-stream filename)
-      *in*
+  (let [stream (if filename (io/input-stream filename) *in*)
+        result (app/validate stream)]
+    (if result
+      (do
+        (println (str (:line result) ": " (:message result)))
+        (System/exit 1)
+        )
+      (System/exit 0)
       )
     )
   )

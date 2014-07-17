@@ -16,9 +16,9 @@
         ]
       (if match
         (let [groups (re-groups matcher)]
-          [(sanitize-message (get groups 1)) (Integer/parseInt (get groups 2))]
+          {:message (sanitize-message (get groups 1)), :line (Integer/parseInt (get groups 2))}
           )
-        [(sanitize-message message) line-number]
+        {:message (sanitize-message message), :line line-number}
         )
     )
   )
@@ -35,7 +35,7 @@
             )
           )
         (catch java.lang.RuntimeException ex
-          (println (parse-error-message (.getMessage ex) (.getLineNumber reader)))
+          (parse-error-message (.getMessage ex) (.getLineNumber reader))
           )
         )
       )
