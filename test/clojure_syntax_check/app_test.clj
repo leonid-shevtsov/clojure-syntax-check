@@ -2,22 +2,24 @@
   (:require [clojure.test :refer :all]
             [clojure-syntax-check.app :refer :all]))
 
-(deftest skip-whitespace-test
-  (testing "skip-whitespace"
-    (testing "inside line"
-      (is (= (skip-whitespace "    (content") "(content"))
+(deftest sanitize-message-test
+  (testing "sanitize-message"
+    (testing "replaces java.lang.RuntimeException in the beginning of line"
+      (is (= (sanitize-message "java.lang.RuntimeException: foo") "foo"))
       )
-    (testing "empty lines"
-      (is (= (skip-whitespace "\n\n\n(content") "(content"))
+    (testing "preserves java.lang.RuntimeException inside of line"
+      (is (= (sanitize-message "bar java.lang.RuntimeException: foo") "bar java.lang.RuntimeException: foo"))
       )
-    (testing "whitespace lines"
-      (is (= (skip-whitespace "\n   \n   \n   (content") "(content"))
+    )
+  )
+
+(deftest parse-error-message-test
+  (testing "parse-error-message"
+    (testing "extracts mentioned line number from error message"
+      (is (= (parse-error-message "java.lang.RuntimeException: foo, starting at line 1" 2) ["foo" 1]))
       )
-    (testing "comment lines"
-      (is (= (skip-whitespace "\n\n\n;comment\n\n(content") "(content"))
-      )
-    (testing "comment with offset"
-      (is (= (skip-whitespace "\n\n\n \t ;comment\n\n(content") "(content"))
+    (testing "falls back on provided line number"
+      (is (= (parse-error-message "java.lang.RuntimeException: foo" 2) ["foo" 2]))
       )
     )
   )

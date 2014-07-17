@@ -5,48 +5,37 @@
     )
   )
 
-(defn skip-whitespace[string]
-  "Skip all clojure whitespace and comments at the beginning of a string"
-  (str/replace string #"(?sx)
-                          ^\s*
-                          (\s*
-                           (;[^\n]*)?
-                           \n
-                          )*" "")
+(defn sanitize-message[message]
+  (str/replace message #"^java\.lang\.RuntimeException: " "")
   )
 
-(defn find-error-position[full-string broken-string-with-whitespace]
-  (let [broken-string (skip-whitespace broken-string-with-whitespace)
-        working-string (.substring full-string 0 (- (.length full-string) (.length broken-string)))
-        newlines-in-working-string (str/replace working-string #"[^\n]" "")
-        line-number (inc (count newlines-in-working-string))
-        last-line (re-find #"(?s)\n[^\n]*$" working-string)
-        char-number (inc (count last-line))
+(defn parse-error-message[message line-number]
+  (let [
+        matcher (re-matcher #"(.+), starting at line (\d+)$" message)
+        match (re-find matcher)
         ]
-      [line-number char-number]
+      (if match
+        (let [groups (re-groups matcher)]
+          [(sanitize-message (get groups 1)) (Integer/parseInt (get groups 2))]
+          )
+        [(sanitize-message message) line-number]
+        )
     )
   )
 
 (defn validate[stream]
   "Validate that the stream contains valid Clojure syntax"
   (binding [*read-eval* false]
-    (let [input-string (slurp stream)
-          string-reader (java.io.StringReader. input-string)
-          ; line-counter (java.io.LineNumberReader. string-reader)
-          reader (clojure.lang.LineNumberingPushbackReader. string-reader)
-          ]
+    (let [reader (clojure.lang.LineNumberingPushbackReader. (io/reader stream))]
       (try
         (loop [reader-result nil]
-          (.mark string-reader 0)
           (if (= reader-result :clojure-syntax-check-end-of-file-reached)
             nil
             (recur (read reader false :clojure-syntax-check-end-of-file-reached))
             )
           )
         (catch java.lang.RuntimeException ex
-          (.reset string-reader)
-          (println (.getMessage ex))
-          (println (find-error-position input-string (slurp string-reader)))
+          (println (parse-error-message (.getMessage ex) (.getLineNumber reader)))
           )
         )
       )
